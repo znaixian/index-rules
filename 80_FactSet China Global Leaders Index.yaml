@@ -1,0 +1,96 @@
+# ===================================================================
+# 80_FACTSET CHINA GLOBAL LEADER INDEX CONFIGURATION
+# Version: 1.2
+# Last Review: 2025-05-23 
+# ===================================================================
+
+index_id: "80"
+name: "FactSet China Global Leaders Index"
+description: "he FactSet China Global Leaders Index is an equity benchmark designed to track the performance of the People's Republic of China’s (“PRC”) related companies, which are either headquartered or incorporated in the PRC, Hong Kong or Macau, that demonstrate global revenue leadership within their industries. The index seeks to capture global growth leadership by focusing on PRC-related companies
+exhibiting higher revenues generated outside of the PRC, Hong Kong and Macau as a proportion of their total revenues, as well as possessing more global customer relationships in their respective industries.
+It is calculated on a price return, total return and net total return basis in China Renminbi (CNH). The price return, total return, and net total return values of the Index are calculated on a real-time and end-of-day basis, from Monday to Friday 1:00 a.m. to 10:50p.m. CET (Central European Time)."
+"agent": "Solactive AG"
+
+# --- Scheduling ---
+schedule:
+  reconstitution_rebalance_frequency: "Semi-annually"
+  # Rebalances effective after close on the fourth Friday of Jan and Jul.
+  effective_on: "4th_friday"
+  effective_months: [1, 7]
+  # Selection dates are the close of 2nd Friday in Jan and Jul.
+  announcement_date_offset_days: NA 
+
+# --- Universe ---
+# Defines the initial pool of securities to screen.
+universe:
+  country: "China" #headquartered or incorporated in the PRC, Hong Kong or Macau
+  exchange_filter: ["HKG","SSH","SHG","NYS","NAS"] 
+# footnote 1: 1 If company has multiple share class in Hong Kong Stock Exchange and Mainland China Exchanges, the Hong Kong Stock Exchange listing is selected. 
+
+# --- Eligibility Criteria (The Filters) ---
+# These rules are applied sequentially to the universe.
+eligibility_criteria:
+  - rule: "security_type"
+    allowed: ["common_stock", "ADR"]  # Securities must be common stocks or ADRs
+
+  - rule: "liquidity"
+    min_3m_avg_daily_trading_value_hkd: 20000000  # Minimum 3-month ADTV of HKD 20 million
+
+  - rule: "rbics_revenue_rank"
+    description: >
+      Rank securities by revenue from RBICS Level 4 Industry Group.
+      Select PRC-related securities ranked in the top 2 globally in revenue within each RBICS Level 4 group.
+    min_revenue_percent_from_industry: 0.25  # At least 25% revenue from that industry group
+
+  - rule: "overseas_revenue"
+    description: >
+      Select securities that either (1) generate more than 25% revenue outside the PRC,
+      or (2) generate more than 1 billion USD in absolute revenue outside the PRC.
+    min_percent_outside_prc: 0.25
+    min_absolute_revenue_usd_outside_prc: 1000000000
+
+  - rule: "overseas_customer_relationship_ratio"
+    description: >
+      Calculate overseas customer relationship ratio as:
+      (number of overseas customer relationships / total number of customer relationships).
+      Select securities with ratio > 50%, or ratio > 20% AND top 1 in RBICS Level 4 industry group in Step 5.
+    min_ratio_strict: 0.50
+    conditional_inclusion:
+      min_ratio: 0.20
+      must_be_top_1_in_rbics_group_step_5: true
+
+# --- Selection Logic ---
+# How the final constituents are chosen from the eligible pool.
+selection:
+  rank_by: "total_company_market_cap"
+  order: "descending"
+  max_constituents: 30
+  note: >
+    If fewer than 30 securities remain after filtering, the global ranking range in step 4 (RBICS Level 4) 
+    will be expanded to include more candidates.
+# --- Weighting Scheme ---
+# How weights are assigned to the final constituents.
+weighting:
+  scheme: "free_float_adjusted_modified_market_cap"
+  method: >
+    Weight each security by dividing its individual float-adjusted company-level market capitalization 
+    by the total float-adjusted company-level market capitalization of all selected securities.
+
+  capping:
+    - group: "rbics_focus_level_1_technology"
+      type: "aggregate"
+      max_weight_percent: 50.0
+      redistribution_method: "proportional_to_uncapped"
+
+    - group: "individual_security"
+      type: "individual"
+      max_weight_percent: 7.0
+      redistribution_method: "proportional_to_uncapped"
+      iteration: true  # Repeat until no security exceeds the cap
+
+  constraints:
+    - rule: "stock_connect_hk_weight_floor"
+      description: >
+        The total weight of companies listed on the Hong Kong Stock Exchange and eligible for 
+        Stock Connect Southbound must be at least 65%.
+      min_aggregate_weight_percent: 65.0
