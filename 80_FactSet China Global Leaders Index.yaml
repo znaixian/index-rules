@@ -25,7 +25,7 @@ schedule:
 universe:
   country: "China" #headquartered or incorporated in the PRC, Hong Kong or Macau
   exchange_filter: ["HKG","SSH","SHG","NYS","NAS"] 
-# footnote 1: 1 If company has multiple share class in Hong Kong Stock Exchange and Mainland China Exchanges, the Hong Kong Stock Exchange listing is selected. 
+# footnote 1: 1 If company has multiple share class in Hong Kong Stock Exchange and Mainland China Exchanges, the Hong Kong Stock Exchange listing is selected. Securities whose headquarter or country of incorporation are in offshore financial centers (OFCs) including the Cayman Islands, British Virgin Islands (BVI), Bermuda, and Ireland and are listed in Hong Kong, Shanghai Stock Connect, and Shenzhen Stock Connect are also eligible. 
 
 # --- Eligibility Criteria (The Filters) ---
 # These rules are applied sequentially to the universe.
